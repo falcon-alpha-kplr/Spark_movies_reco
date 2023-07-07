@@ -107,18 +107,22 @@ class RecommendationEngine:
         recommended_movies_df = recommendations.join(self.movies_df, recommendations.movieId == self.movies_df.movieId)
 
         # Sélectionner les colonnes souhaitées du dataframe résultant
-        result_df = recommended_movies_df.select("title", ...)
+        result_df = recommended_movies_df.select("title")   # ou ("title", ...)
 
         return result_df
 
 
-    def __train_model(self):
+    def __train_model(self, ratings_df):
         # Méthode privée pour entraîner le modèle avec ALS
         # Créer une instance de l'algorithme ALS avec les paramètres maxIter et regParam
-        als = ALS(maxIter=self.maxIter, regParam=self.regParam)
+        als = ALS(maxIter=self.maxIter, regParam=self.regParam, userCol="userId", itemCol="movieId", ratingCol="rating")
+
+        # Diviser les données en ensembles d'entraînement et de test
+        training_data, test_data = ratings_df.randomSplit([0.8, 0.2])
 
         # Entraîner le modèle en utilisant le dataframe training
-        model = als.fit(self.training)
+        #model = als.fit(self.training)
+        model = als.fit(training_data)
 
         # Appeler la méthode privée __evaluate() pour évaluer les performances du modèle
         self.__evaluate(model)
@@ -126,7 +130,8 @@ class RecommendationEngine:
         # Retourner le modèle entraîné
         return model
 
-    def __evaluate(self):
+    def __evaluate(self, model):
+        # le paramètre model a été rajouté à la méthode __evaluate  
         # Méthode privée pour évaluer le modèle en calculant l'erreur quadratique moyenne
         # Utiliser le modèle pour prédire les évaluations sur le dataframe test
         predictions = self.model.transform(self.test)
@@ -176,4 +181,4 @@ class RecommendationEngine:
         # Effectuer d'autres opérations de traitement des données si nécessaire
 
         # Entraîner le modèle en utilisant la méthode privée __train_model()
-        self.__train_model()
+        self.__train_model(ratings_df)
